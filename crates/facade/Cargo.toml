@@ -1,0 +1,36 @@
+[package]
+name = "jax-privacy"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[features]
+default = []
+f32 = ["jax-privacy-core/f32"]
+serde = [
+  "jax-privacy-core/serde",
+  "jax-privacy-accounting/serde",
+  "jax-privacy-mf/serde",
+  "jax-privacy-audit/serde",
+]
+burn = ["jax-privacy-adapter-burn"]
+candle = ["jax-privacy-adapter-candle"]
+tch = ["jax-privacy-adapter-tch"]
+
+[dependencies]
+jax-privacy-core = { path = "../core" }
+jax-privacy-prng = { path = "../prng" }
+jax-privacy-accounting = { path = "../accounting" }
+jax-privacy-mf = { path = "../mf" }
+jax-privacy-audit = { path = "../audit" }
+jax-privacy-derive = { path = "../derive", optional = true }
+rand.workspace = true
+
+jax-privacy-adapter-burn = { path = "../adapters/burn", optional = true }
+jax-privacy-adapter-candle = { path = "../adapters/candle", optional = true }
+jax-privacy-adapter-tch = { path = "../adapters/tch", optional = true }
+
+[dev-dependencies]
+ndarray.workspace = true
+jax-privacy-derive = { path = "../derive" }

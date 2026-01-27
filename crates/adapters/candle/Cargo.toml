@@ -1,0 +1,12 @@
+[package]
+name = "jax-privacy-adapter-candle"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[features]
+default = []
+
+[dependencies]
+jax-privacy-core = { path = "../../core" }
