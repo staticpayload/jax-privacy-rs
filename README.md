@@ -1,12 +1,46 @@
-# JAX-Privacy (Rust)
+<p align="center">
+  <img src="assets/banner.svg" alt="JAX-Privacy Rust banner" width="100%" />
+</p>
 
-| Docs | Crate | Examples |
-| --- | --- | --- |
-| `docs/` | `crates/facade` (`jax-privacy`) | `crates/facade/examples` |
+<h1 align="center">JAX-Privacy · Rust</h1>
 
-This repository is a Rust rewrite of the JAX Privacy library from Google DeepMind. It provides
-production-focused building blocks for differentially-private (DP) machine learning, with a
-framework-agnostic core and feature-gated adapters for popular Rust ML ecosystems.
+<p align="center">
+  Differential Privacy primitives, accounting, and correlated noise for modern ML stacks.
+</p>
+
+<p align="center">
+  <a href="https://github.com/staticpayload/jax-privacy-rs/actions/workflows/ci.yml">
+    <img src="https://github.com/staticpayload/jax-privacy-rs/actions/workflows/ci.yml/badge.svg" alt="CI" />
+  </a>
+  <img src="https://img.shields.io/badge/rust-2021%20edition-0b2b4c" alt="Rust" />
+  <img src="https://img.shields.io/badge/license-GPL--3.0-0b2b4c" alt="License" />
+</p>
+
+<p align="center">
+  <a href="docs/index.md">Docs</a> ·
+  <a href="crates/facade">Crate</a> ·
+  <a href="crates/facade/examples">Examples</a> ·
+  <a href="AGENTS.md">Architecture</a> ·
+  <a href="CONTRIBUTING.md">Contributing</a>
+</p>
+
+---
+
+## Inspired by JAX Privacy
+
+<p>
+  <img src="https://upload.wikimedia.org/wikipedia/commons/6/6a/DeepMind_new_logo.svg" height="20" alt="DeepMind" style="vertical-align: middle;" />
+  <strong>Inspired by Google DeepMind’s JAX Privacy.</strong>
+  This Rust port is independent and <strong>not affiliated</strong> with Google or DeepMind.
+</p>
+
+---
+
+## What is this?
+
+This repository is a Rust rewrite of the JAX Privacy library. It provides production‑focused
+building blocks for differentially‑private (DP) ML, with a framework‑agnostic core and
+feature‑gated adapters for popular Rust ML ecosystems.
 
 Key goals:
 - Numerical equivalence with the reference JAX implementation where possible.
@@ -15,12 +49,12 @@ Key goals:
 
 ## Features
 
-- DP-SGD primitives: clipping, aggregation, Gaussian/Laplace noise.
+- DP‑SGD primitives: clipping, aggregation, Gaussian/Laplace noise.
 - Privacy accounting: RDP + discretized PLD (Gaussian + Poisson subsampling).
 - Matrix factorization: Toeplitz, banded, streaming matrix utilities.
-- Auditing utilities: membership inference and canary-score auditing.
-- Deterministic PRNG compatible with JAX-style key splitting.
-- PyTree-equivalent trait and derive macro for structured tensors.
+- Auditing utilities: membership inference and canary‑score auditing.
+- Deterministic PRNG compatible with JAX‑style key splitting.
+- PyTree‑equivalent trait and derive macro for structured tensors.
 
 ## Workspace layout
 
@@ -82,7 +116,7 @@ cargo run -p jax-privacy --example canary_audit
 
 ## Documentation
 
-See `docs/` for the Rust-specific overview, installation notes, and library design.
+See `docs/` for the Rust‑specific overview, installation notes, and library design.
 
 ## Reproducing Results
 
@@ -98,6 +132,11 @@ this Rust port. See `CITATION.cff`.
 ## License
 
 GNU General Public License v3.0. See `LICENSE`.
+
+## Attribution
+
+DeepMind logo is sourced from Wikimedia Commons. This project is not affiliated
+with Google or DeepMind.
 
 ## Disclaimer
 
