@@ -26,6 +26,6 @@ rand_distr = "0.4"
 thiserror = "1"
 serde = { version = "1", features = ["derive"] }
 statrs = "0.16"
-rustfft = "6"
+num-complex = "0.4"
 approx = "0.5"
 proptest = "1"

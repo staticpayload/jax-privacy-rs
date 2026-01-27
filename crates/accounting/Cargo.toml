@@ -11,7 +11,7 @@ serde = ["dep:serde", "jax-privacy-core/serde"]
 
 [dependencies]
 statrs.workspace = true
-rustfft.workspace = true
+num-complex.workspace = true
 thiserror.workspace = true
 serde = { workspace = true, optional = true }
 jax-privacy-core = { path = "../core" }

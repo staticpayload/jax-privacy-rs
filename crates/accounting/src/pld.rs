@@ -5,9 +5,9 @@
 //! mechanisms and Poisson subsampling, which cover DP-SGD and BandMF usage.
 
 use std::collections::HashMap;
+use std::f64::consts::PI;
 
-use rustfft::num_complex::Complex;
-use rustfft::FftPlanner;
+use num_complex::Complex;
 use statrs::distribution::{Binomial, ContinuousCDF, DiscreteCDF, Normal};
 
 use jax_privacy_core::clipping::NeighboringRelation;
@@ -58,7 +58,6 @@ where
 
 #[derive(Clone, Debug)]
 struct GaussianPrivacyLoss {
-    standard_deviation: f64,
     sensitivity: f64,
     sampling_prob: f64,
     adjacency_type: AdjacencyType,
@@ -80,7 +79,6 @@ impl GaussianPrivacyLoss {
         let normal = Normal::new(0.0, standard_deviation).expect("normal");
         let variance = standard_deviation * standard_deviation;
         Self {
-            standard_deviation,
             sensitivity,
             sampling_prob,
             adjacency_type,
@@ -95,8 +93,14 @@ impl GaussianPrivacyLoss {
         self.normal.cdf(x)
     }
 
+    #[allow(dead_code)]
     fn noise_log_cdf(&self, x: f64) -> f64 {
-        self.normal.ln_cdf(x)
+        let cdf = self.normal.cdf(x);
+        if cdf <= 0.0 {
+            f64::NEG_INFINITY
+        } else {
+            cdf.ln()
+        }
     }
 
     fn privacy_loss_without_subsampling_remove(&self, x: f64) -> f64 {
@@ -280,6 +284,9 @@ impl PldPmf {
         if tail_mass_truncation == 0.0 {
             return (0, probs, 0.0);
         }
+        if probs.is_empty() {
+            return (0, probs, 0.0);
+        }
         let mut left_idx = 0usize;
         let mut left_mass = 0.0;
         while left_idx < probs.len() {
@@ -288,6 +295,9 @@ impl PldPmf {
                 break;
             }
             left_idx += 1;
+        }
+        if left_idx >= probs.len() {
+            return (0, probs, 0.0);
         }
 
         let mut right_idx = probs.len();
@@ -300,9 +310,12 @@ impl PldPmf {
                 break;
             }
         }
+        if right_idx > probs.len() {
+            right_idx = probs.len();
+        }
 
         if right_idx <= left_idx {
-            right_idx = left_idx + 1;
+            right_idx = (left_idx + 1).min(probs.len());
         }
 
         let mut truncated = probs[left_idx..right_idx].to_vec();
@@ -319,16 +332,54 @@ impl PldPmf {
         }
     }
 
+    fn fft_in_place(buf: &mut [Complex<f64>], invert: bool) {
+        let n = buf.len();
+        debug_assert!(n.is_power_of_two());
+
+        let mut j = 0usize;
+        for i in 1..n {
+            let mut bit = n >> 1;
+            while j & bit != 0 {
+                j ^= bit;
+                bit >>= 1;
+            }
+            j ^= bit;
+            if i < j {
+                buf.swap(i, j);
+            }
+        }
+
+        let mut len = 2usize;
+        while len <= n {
+            let ang = 2.0 * PI / len as f64 * if invert { -1.0 } else { 1.0 };
+            let wlen = Complex::from_polar(1.0, ang);
+            for i in (0..n).step_by(len) {
+                let mut w = Complex::new(1.0, 0.0);
+                for j in 0..(len / 2) {
+                    let u = buf[i + j];
+                    let v = buf[i + j + len / 2] * w;
+                    buf[i + j] = u + v;
+                    buf[i + j + len / 2] = u - v;
+                    w *= wlen;
+                }
+            }
+            len <<= 1;
+        }
+
+        if invert {
+            let scale = 1.0 / n as f64;
+            for v in buf.iter_mut() {
+                *v *= scale;
+            }
+        }
+    }
+
     fn convolve(a: &[f64], b: &[f64]) -> Vec<f64> {
         let n = a.len() + b.len() - 1;
         let mut size = 1usize;
         while size < n {
             size <<= 1;
         }
-
-        let mut planner = FftPlanner::<f64>::new();
-        let fft = planner.plan_fft_forward(size);
-        let ifft = planner.plan_fft_inverse(size);
 
         let mut fa = vec![Complex::new(0.0, 0.0); size];
         let mut fb = vec![Complex::new(0.0, 0.0); size];
@@ -338,17 +389,17 @@ impl PldPmf {
         for (i, &val) in b.iter().enumerate() {
             fb[i].re = val;
         }
-        fft.process(&mut fa);
-        fft.process(&mut fb);
+
+        Self::fft_in_place(&mut fa, false);
+        Self::fft_in_place(&mut fb, false);
         for (a_i, b_i) in fa.iter_mut().zip(fb.iter()) {
             *a_i *= *b_i;
         }
-        ifft.process(&mut fa);
+        Self::fft_in_place(&mut fa, true);
 
-        let scale = 1.0 / size as f64;
         let mut out = Vec::with_capacity(n);
         for i in 0..n {
-            out.push(fa[i].re * scale);
+            out.push(fa[i].re);
         }
         out
     }
@@ -359,6 +410,20 @@ impl PldPmf {
         let mut lower_loss = self.lower_loss + other.lower_loss;
         let infinity_mass =
             self.infinity_mass + other.infinity_mass - self.infinity_mass * other.infinity_mass;
+        let mut finite_mass = 0.0;
+        for p in probs.iter_mut() {
+            if *p < 0.0 {
+                *p = 0.0;
+            }
+            finite_mass += *p;
+        }
+        if finite_mass > 0.0 {
+            let target_mass = (1.0 - infinity_mass).max(0.0);
+            let scale = target_mass / finite_mass;
+            for p in probs.iter_mut() {
+                *p *= scale;
+            }
+        }
         let (offset, truncated, right_tail) = self.truncate_tails(probs, tail_mass_truncation);
         lower_loss += offset as i64;
         Self {
@@ -390,6 +455,7 @@ impl PldPmf {
         result
     }
 
+    #[allow(dead_code)]
     fn get_delta_for_epsilon(&self, epsilon: f64) -> f64 {
         let mut delta = self.infinity_mass;
         for (i, prob) in self.probs.iter().enumerate() {
@@ -433,6 +499,7 @@ impl PldPmf {
         ((mass_upper - delta) / mass_lower).ln()
     }
 
+    #[allow(dead_code)]
     fn get_delta_for_epsilon_for_composed_pld(&self, other: &Self, epsilon: f64) -> f64 {
         self.validate_composable(other);
         let mut delta =
@@ -530,6 +597,7 @@ impl PrivacyLossDistribution {
         Self::symmetric(PldPmf::identity(value_discretization_interval, pessimistic))
     }
 
+    #[allow(dead_code)]
     fn get_delta_for_epsilon(&self, epsilon: f64) -> f64 {
         let delta_remove = self.pmf_remove.get_delta_for_epsilon(epsilon);
         if let Some(add) = &self.pmf_add {

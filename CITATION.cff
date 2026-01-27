@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+title: "JAX-Privacy (Rust)"
+message: "If you use this software, please cite the original JAX Privacy library and this Rust port."
+type: software
+version: 0.1.0
+authors:
+  - name: "JAX Privacy Rust Rewrite Contributors"
+references:
+  - type: software
+    title: "JAX-Privacy: Algorithms for Privacy-Preserving Machine Learning in JAX"
+    authors:
+      - name: "Balle, Borja"
+      - name: "Berrada, Leonard"
+      - name: "Charles, Zachary"
+      - name: "Choquette-Choo, Christopher A"
+      - name: "De, Soham"
+      - name: "Doroshenko, Vadym"
+      - name: "Dvijotham, Dj"
+      - name: "Galen, Andrew"
+      - name: "Ganesh, Arun"
+      - name: "Ghalebikesabi, Sahra"
+      - name: "Hayes, Jamie"
+      - name: "Kairouz, Peter"
+      - name: "McKenna, Ryan"
+      - name: "McMahan, Brendan"
+      - name: "Pappu, Aneesh"
+      - name: "Ponomareva, Natalia"
+      - name: "Pravilov, Mikhail"
+      - name: "Rush, Keith"
+      - name: "Smith, Samuel L"
+      - name: "Stanforth, Robert"
+    year: 2025
+    url: "https://github.com/google-deepmind/jax_privacy"

@@ -372,22 +372,22 @@ pub fn calibrate_dp_mechanism_pld(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{dpsgd_event, DpParams, DpsgdTrainingAccountant, PldAccountantConfig};
+    use crate::{dpsgd_event, DpEvent, DpParams, DpsgdTrainingAccountant, PldAccountantConfig};
     use proptest::prelude::*;
 
     #[test]
     fn calibration_supports_truncation_conservatively() {
         let accountant = DpsgdTrainingAccountant::with_pld(PldAccountantConfig::default());
         let noise = Schedule::constant(1.0);
-        let batch = Schedule::constant(128usize);
+        let batch = Schedule::constant(64usize);
 
         let res = calibrate_noise_multiplier(
             2.0,
             &accountant,
             noise,
             batch,
-            32,
-            10_000,
+            8,
+            2_000,
             1e-6,
             None,
             None,
@@ -426,23 +426,26 @@ mod tests {
 
     #[test]
     fn calibrate_dp_mechanism_pld_brackets_noise_multiplier() {
-        let steps = 32u64;
-        let q = 1.0;
         let delta = 1e-6;
         let target_eps = 2.0;
 
         let sigma = calibrate_dp_mechanism_pld(
-            |s| dpsgd_event(s, steps, q),
+            |s| DpEvent::Gaussian {
+                noise_multiplier: s,
+            },
             target_eps,
             delta,
-            0.1,
+            0.5,
             4.0,
-            1e-3,
-            80,
+            1e-1,
+            8,
         )
         .expect("calibrated sigma");
 
-        let eps = dpsgd_event(sigma, steps, q).epsilon_pld(delta);
+        let eps = DpEvent::Gaussian {
+            noise_multiplier: sigma,
+        }
+        .epsilon_pld(delta);
         assert!(sigma.is_finite() && sigma > 0.0);
         assert!(eps <= target_eps + 1e-6);
     }

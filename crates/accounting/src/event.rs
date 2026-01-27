@@ -77,12 +77,9 @@ impl DpEvent {
                 truncated_batch_size,
                 noise_multiplier,
             } => {
-                acct.truncated_step(
-                    *dataset_size,
-                    *sampling_probability,
-                    *truncated_batch_size,
-                    *noise_multiplier,
-                );
+                let q_cap = (*truncated_batch_size as f64) / (*dataset_size as f64);
+                let q = sampling_probability.min(q_cap).clamp(0.0, 1.0);
+                acct.step(*noise_multiplier, q);
             }
             DpEvent::SelfComposed { event, count } => {
                 for _ in 0..*count {

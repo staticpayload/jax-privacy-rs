@@ -118,6 +118,7 @@ version = "0.1.0"
 dependencies = [
  "approx",
  "jax-privacy-core",
+ "num-complex",
  "proptest",
  "serde",
  "statrs",
